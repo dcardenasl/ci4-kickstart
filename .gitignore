@@ -1,0 +1,7 @@
+# Subproyectos locales — viven en sus propios repos de GitHub
+ci4-api-starter/
+ci4-admin-starter/
+
+# macOS
+.DS_Store
+**/.DS_Store
