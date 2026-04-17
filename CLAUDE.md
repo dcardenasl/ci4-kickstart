@@ -76,12 +76,14 @@ After the script finishes, orient yourself in the generated project by reading:
 
 **API Project** (`ci4-api-starter`):
 ```bash
-php spark serve                     # Start API server (port 8080)
-php spark make:crud {Name} --domain {Domain} --fields="field1:type,field2:type"  # Generate new CRUD
-php spark migrate                   # Run database migrations
-php spark swagger:generate          # Generate OpenAPI documentation
-composer quality                    # Run all quality checks
-vendor/bin/phpunit                  # Run tests
+php spark serve                                                         # Start API server (port 8080)
+bash bin/make-crud.sh {Name} {Domain} '{field1:type,field2:type}' yes   # Scaffold new CRUD (recommended)
+php spark make:crud {Name} --domain {Domain}                            # Alternative: interactive scaffold
+php spark module:check {Name} --domain {Domain}                         # Validate scaffolded wiring
+php spark migrate                                                       # Run database migrations
+php spark swagger:generate                                              # Generate OpenAPI documentation
+composer quality                                                        # Run all quality checks
+vendor/bin/phpunit                                                      # Run tests
 ```
 
 **Admin Project** (`ci4-admin-starter`):
@@ -228,15 +230,25 @@ All ports are configurable. See individual project `.env` files.
 ```bash
 cd ci4-api-starter
 
-# Generate new CRUD module (generates DTOs, Services, Controllers, Migrations, OpenAPI docs)
-php spark make:crud Product --domain Catalog \
-  --fields="name:string:required|searchable,price:decimal:required|filterable"
+# Scaffold a new CRUD module (recommended: the shell-safe wrapper)
+# Generates DTOs, Services, Controllers, Migrations, OpenAPI docs, routes, i18n, tests.
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable' \
+  yes
+
+# Alternative (interactive / TTY-only): php spark make:crud Product --domain Catalog
+
+# Validate wiring
+php spark module:check Product --domain Catalog
 
 # Review the generated migration
-cat app/Database/Migrations/[timestamp]_CreateProductTable.php
+cat app/Database/Migrations/[timestamp]_CreateProductsTable.php
 
 # Apply the migration
 php spark migrate
+
+# Restart the server so new route files are detected
+pkill -f 'spark serve'; php spark serve --port 8080 &
 
 # Generate OpenAPI documentation
 php spark swagger:generate
@@ -245,6 +257,8 @@ php spark swagger:generate
 The scaffold is complete and production-ready. Modify only if domain logic requires custom behavior beyond standard CRUD.
 
 **Never manually create DTO files** — the scaffolding engine ensures consistency and completeness.
+
+**Never invoke `php spark make:crud` directly from non-TTY contexts (CI, Claude Code, scripts)** — shell expansion can drop pipes in `--fields`, and the engine silently falls back to interactive mode that never responds. Use `bin/make-crud.sh` instead.
 
 ### Adding a New Feature to the Admin
 

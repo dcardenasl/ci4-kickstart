@@ -79,9 +79,12 @@ Then open [http://localhost:8082](http://localhost:8082) and log in with your su
 **New API endpoint:**
 ```bash
 cd my-app-api
-php spark make:crud Product --domain Catalog \
-  --fields="name:string:required|searchable,price:decimal:required|filterable"
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable' \
+  yes
+php spark module:check Product --domain Catalog
 php spark migrate
+pkill -f 'spark serve'; php spark serve --port 8080 &
 php spark swagger:generate
 ```
 
