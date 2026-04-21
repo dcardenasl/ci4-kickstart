@@ -14,6 +14,27 @@
 
 set -euo pipefail
 
+# ---------------------------------------------------------------------------
+# Flags
+# ---------------------------------------------------------------------------
+AUTO_YES=false
+while [ $# -gt 0 ]; do
+  case $1 in
+    --yes|-y) AUTO_YES=true; shift ;;
+    --help|-h)
+      printf "Usage: bash new-project.sh [--yes|-y]\n\n"
+      printf "Options:\n"
+      printf "  --yes, -y   Auto-confirm the '¿Continuar?' prompt\n"
+      printf "  --help      Show this help\n"
+      exit 0
+      ;;
+    *)
+      print_err "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
+
 # -----------------------------------------------------------------------------
 # Colors & output helpers
 # -----------------------------------------------------------------------------
@@ -87,14 +108,22 @@ print_ok "git encontrado"
 # =============================================================================
 print_header "Configuración del proyecto"
 
-read -r -p "$(echo -e "  ${BOLD}Nombre del proyecto${RESET} (e.g. my-app): ")" INPUT_PROJECT_NAME
-PROJECT_NAME_RAW="$(trim "$INPUT_PROJECT_NAME")"
+if [ -n "${CI4_PROJECT_NAME:-}" ]; then
+  PROJECT_NAME_RAW="$(trim "$CI4_PROJECT_NAME")"
+else
+  read -r -p "$(echo -e "  ${BOLD}Nombre del proyecto${RESET} (e.g. my-app): ")" INPUT_PROJECT_NAME
+  PROJECT_NAME_RAW="$(trim "$INPUT_PROJECT_NAME")"
+fi
 [[ -n "$PROJECT_NAME_RAW" ]] || die "El nombre del proyecto no puede estar vacío."
 PROJECT_NAME="$(slugify "$PROJECT_NAME_RAW")"
 [[ -n "$PROJECT_NAME" ]] || die "El nombre resultante está vacío tras el slugify. Usa caracteres alfanuméricos."
 
-read -r -p "$(echo -e "  ${BOLD}Directorio de salida${RESET} [../]: ")" INPUT_OUTPUT_DIR
-OUTPUT_DIR="$(trim "${INPUT_OUTPUT_DIR:-../}")"
+if [ -n "${CI4_OUTPUT_DIR:-}" ]; then
+  OUTPUT_DIR="$(trim "$CI4_OUTPUT_DIR")"
+else
+  read -r -p "$(echo -e "  ${BOLD}Directorio de salida${RESET} [../]: ")" INPUT_OUTPUT_DIR
+  OUTPUT_DIR="$(trim "${INPUT_OUTPUT_DIR:-../}")"
+fi
 # Asegurar que termina en /
 [[ "${OUTPUT_DIR: -1}" == "/" ]] || OUTPUT_DIR="${OUTPUT_DIR}/"
 
@@ -111,8 +140,13 @@ echo ""
 [[ ! -e "$API_DIR" ]]   || die "El directorio '${API_DIR}' ya existe. Elige otro nombre o elimínalo."
 [[ ! -e "$ADMIN_DIR" ]] || die "El directorio '${ADMIN_DIR}' ya existe. Elige otro nombre o elimínalo."
 
-read -r -p "$(echo -e "  ${BOLD}¿Continuar? [y/N]:${RESET} ")" CONFIRM
-[[ "${CONFIRM,,}" == "y" ]] || { echo ""; print_warn "Cancelado. No se realizaron cambios."; exit 0; }
+if [ "$AUTO_YES" = true ] || [ -n "${CI4_CONFIRM:-}" ]; then
+  CONFIRM="${CI4_CONFIRM:-y}"
+else
+  read -r -p "$(echo -e "  ${BOLD}¿Continuar? [y/N]:${RESET} ")" CONFIRM
+fi
+_confirm_lower="$(printf '%s' "$CONFIRM" | tr '[:upper:]' '[:lower:]')"
+[ "$_confirm_lower" = "y" ] || { echo ""; print_warn "Cancelado. No se realizaron cambios."; exit 0; }
 
 # =============================================================================
 # Clonación de proyectos desde GitHub
@@ -164,6 +198,15 @@ init_git() {
 
 init_git "$API_DIR"   "${PROJECT_NAME}-api"
 init_git "$ADMIN_DIR" "${PROJECT_NAME}-admin"
+
+# =============================================================================
+# Export CI4_* env vars so child scripts inherit them
+# =============================================================================
+export CI4_DB_HOST CI4_DB_PORT CI4_DB_USER CI4_DB_PASS CI4_DB_NAME CI4_TEST_DB_NAME
+export CI4_SA_EMAIL CI4_SA_PASSWORD CI4_SA_FIRST_NAME CI4_SA_LAST_NAME
+export CI4_API_NAME CI4_API_GITHUB_URL CI4_API_BASE_URL CI4_APP_NAME CI4_ADMIN_PORT
+export CI4_RUN_COMPOSER CI4_REMOVE_SELF CI4_CONFIRM CI4_START_SERVER
+export CI4_RESET_GIT CI4_DOCKER_CONTAINER CI4_OVERWRITE_ENV
 
 # =============================================================================
 # Setup de la API
