@@ -58,6 +58,39 @@ die()          { print_err "$*"; exit 1; }
 API_TEMPLATE_REPO="https://github.com/dcardenasl/ci4-api-starter.git"
 ADMIN_TEMPLATE_REPO="https://github.com/dcardenasl/ci4-admin-starter.git"
 
+# -----------------------------------------------------------------------------
+# Cleanup: removes only directories THIS SCRIPT created on unexpected failure.
+# Tracks what was actually created to avoid deleting pre-existing directories.
+# -----------------------------------------------------------------------------
+API_DIR=""
+ADMIN_DIR=""
+API_CREATED=false
+ADMIN_CREATED=false
+
+cleanup_on_error() {
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        echo ""
+        print_err "El script falló (código $exit_code). Limpiando directorios creados..."
+        local cleaned=false
+        if [ "$API_CREATED" = "true" ] && [ -n "$API_DIR" ] && [ -e "$API_DIR" ]; then
+            rm -rf "$API_DIR"
+            print_warn "Eliminado: ${API_DIR}"
+            cleaned=true
+        fi
+        if [ "$ADMIN_CREATED" = "true" ] && [ -n "$ADMIN_DIR" ] && [ -e "$ADMIN_DIR" ]; then
+            rm -rf "$ADMIN_DIR"
+            print_warn "Eliminado: ${ADMIN_DIR}"
+            cleaned=true
+        fi
+        if [ "$cleaned" = "false" ]; then
+            print_warn "No se realizaron cambios permanentes."
+        fi
+    fi
+}
+
+trap cleanup_on_error EXIT
+
 trim() {
     local value="$1"
     value="${value#"${value%%[![:space:]]*}"}"
@@ -166,7 +199,9 @@ clone_project() {
 }
 
 clone_project "$API_TEMPLATE_REPO"   "$API_DIR"   "API"
+API_CREATED=true
 clone_project "$ADMIN_TEMPLATE_REPO" "$ADMIN_DIR" "Admin"
+ADMIN_CREATED=true
 
 # =============================================================================
 # Inicialización de git
