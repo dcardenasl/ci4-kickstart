@@ -8,17 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `Makefile` with `help`, `new-project`, `test-*`, `quality-*`, `docker-*` convenience targets
+- `Makefile` with `help`, `new-project`, `test-*`, `quality-*`, and `docker-*` convenience targets
 - `LICENSE` (MIT)
 - `CONTRIBUTING.md` with branching strategy, quality gates, and PR checklist
 - Rollback trap in `new-project.sh` — automatically removes created directories if setup fails mid-way
 
+### Changed
+- `new-project.sh` updated to reference the external GitHub repositories instead of local copies
+- Kit-level documentation aligned on `bin/make-crud.sh` as the canonical scaffolding command
+- `docs/plans` and `.claude` directories added to `.gitignore`
+
 ## [1.0.0] — 2026-04-29
 
 ### Added
-- Initial public release of ci4-starter-kit orchestrator
-- `new-project.sh` to scaffold API + Admin project pairs from GitHub templates
-- `AI_NEW_PROJECT_PROMPT.en.md` and `AI_NEW_PROJECT_PROMPT.es.md` for AI-assisted setup
+- Initial public release of the ci4-starter-kit orchestrator
+- `new-project.sh` to scaffold a fresh API + Admin project pair from the GitHub templates
+- `AI_NEW_PROJECT_PROMPT.en.md` and `AI_NEW_PROJECT_PROMPT.es.md` for AI-assisted project setup
 - Bilingual `CLAUDE.md` (workspace-level orientation) and `README.md`
 
 [unreleased]: https://github.com/dcardenasl/ci4-starter-kit/compare/v1.0.0...HEAD
