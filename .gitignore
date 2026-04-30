@@ -5,3 +5,7 @@ ci4-admin-starter/
 # macOS
 .DS_Store
 **/.DS_Store
+
+docs/plans/
+
+.claude/
