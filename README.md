@@ -24,6 +24,17 @@ Browser → CI4 Admin (8082) → CI4 API (8080) → MySQL
 - MySQL (local or Docker)
 - Git
 
+#### Windows
+
+`new-project.sh` requires a Bash environment. On Windows, use one of:
+
+- **WSL 2** (recommended) — install via `wsl --install` in PowerShell, then run all commands inside the WSL terminal
+- **Git Bash** — ships with [Git for Windows](https://git-scm.com/download/win); open "Git Bash" and run commands there
+
+Once inside WSL or Git Bash, the setup and all subsequent development commands work identically to Linux/macOS.
+
+> **Note:** When using WSL 2, run the project files inside the WSL filesystem (e.g. `~/projects/`) rather than a mounted Windows drive (`/mnt/c/...`). File I/O on mounted drives is significantly slower and can cause issues with `composer install` and `npm`.
+
 ### Create a new project
 
 ```bash

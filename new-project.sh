@@ -199,8 +199,10 @@ clone_project() {
 }
 
 clone_project "$API_TEMPLATE_REPO"   "$API_DIR"   "API"
+API_DIR="$(cd "$API_DIR" && pwd)"
 API_CREATED=true
 clone_project "$ADMIN_TEMPLATE_REPO" "$ADMIN_DIR" "Admin"
+ADMIN_DIR="$(cd "$ADMIN_DIR" && pwd)"
 ADMIN_CREATED=true
 
 # =============================================================================
@@ -218,7 +220,7 @@ init_git() {
 
     # Verificar que .env está en .gitignore antes de hacer commit
     if git check-ignore -q .env 2>/dev/null; then
-        git add . -q
+        git add . >/dev/null 2>&1
         if git commit -q -m "Initial commit from ci4-kickstart" 2>/dev/null; then
             print_ok "Git inicializado en ${label} con commit inicial"
         else
