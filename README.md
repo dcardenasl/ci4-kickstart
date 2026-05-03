@@ -1,4 +1,4 @@
-# CI4 Starter Kit
+# CI4 Kickstart
 
 A complete, production-ready starting point for administrative applications built with CodeIgniter 4. Includes a REST API backend and a server-rendered admin frontend — both fully implemented and ready to customize.
 
@@ -6,8 +6,8 @@ A complete, production-ready starting point for administrative applications buil
 
 | Project | Description | Port |
 |---------|-------------|------|
-| [`ci4-api-starter`](ci4-api-starter/) | REST API backend — JWT auth, RBAC, CRUD scaffolding, OpenAPI docs | 8080 |
-| [`ci4-admin-starter`](ci4-admin-starter/) | Admin frontend — Tailwind CSS, Alpine.js, all modules wired | 8082 |
+| [`ci4-api-starter`](https://github.com/dcardenasl/ci4-api-starter) | REST API backend — JWT auth, RBAC, CRUD scaffolding, OpenAPI docs | 8080 |
+| [`ci4-admin-starter`](https://github.com/dcardenasl/ci4-admin-starter) | Admin frontend — Tailwind CSS, Alpine.js, all modules wired | 8082 |
 
 **Architecture:**
 ```
@@ -27,8 +27,8 @@ Browser → CI4 Admin (8082) → CI4 API (8080) → MySQL
 ### Create a new project
 
 ```bash
-git clone https://github.com/dcardenasl/ci4-starter-kit.git
-cd ci4-starter-kit
+git clone https://github.com/dcardenasl/ci4-kickstart.git
+cd ci4-kickstart
 bash new-project.sh
 ```
 
@@ -79,18 +79,19 @@ Then open [http://localhost:8082](http://localhost:8082) and log in with your su
 **New API endpoint:**
 ```bash
 cd my-app-api
-php spark make:crud Product --domain Catalog \
-  --fields="name:string:required|searchable,price:decimal:required|filterable"
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable' \
+  yes
+php spark module:check Product --domain Catalog
 php spark migrate
+pkill -f 'spark serve'; php spark serve --port 8080 &
 php spark swagger:generate
 ```
 
-**New Admin module:** See [`ci4-admin-starter/CLAUDE.md`](ci4-admin-starter/CLAUDE.md) for the module structure.
+**New Admin module:** See [`ci4-admin-starter` documentation](https://github.com/dcardenasl/ci4-admin-starter#claude) for the module structure.
 
 ## Documentation
 
-- [`ci4-api-starter/CLAUDE.md`](ci4-api-starter/CLAUDE.md) — API architecture, DTO-first patterns, testing
-- [`ci4-admin-starter/CLAUDE.md`](ci4-admin-starter/CLAUDE.md) — Admin architecture, ApiClient, modules
-- [`ci4-api-starter/GETTING_STARTED.md`](ci4-api-starter/GETTING_STARTED.md) — Detailed API setup guide
-- [`ci4-admin-starter/docs/`](ci4-admin-starter/docs/) — Frontend, services, deployment guides
-- [`CLAUDE.md`](CLAUDE.md) — System-wide overview for AI-assisted development
+- **ci4-api-starter** — See [API repository](https://github.com/dcardenasl/ci4-api-starter) for architecture, DTO-first patterns, testing, and detailed setup guides
+- **ci4-admin-starter** — See [Admin repository](https://github.com/dcardenasl/ci4-admin-starter) for architecture, ApiClient, modules, frontend design, and deployment guides
+- [`CLAUDE.md`](CLAUDE.md) — System-wide overview for AI-assisted development (local guide when working in this kit)
