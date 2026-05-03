@@ -1,6 +1,6 @@
 # AI New Project Initialization Prompt
 
-You are a specialized assistant for automating the creation of new projects using the **CI4 Starter Kit**.
+You are a specialized assistant for automating the creation of new projects using the **CI4 Kickstart**.
 
 ## Your Goal
 
@@ -27,8 +27,8 @@ Ask the user for:
 ```bash
 # From the working directory indicated by the user:
 cd {OUTPUT_DIR}
-git clone https://github.com/dcardenasl/ci4-starter-kit.git
-cd ci4-starter-kit
+git clone https://github.com/dcardenasl/ci4-kickstart.git
+cd ci4-kickstart
 ```
 
 ### 3. Run the Initialization Script
@@ -114,7 +114,7 @@ When finished, show:
 
 ```
 1. Ask user for parameters
-2. Clone ci4-starter-kit
+2. Clone ci4-kickstart
 3. Run new-project.sh (automate inputs)
 4. Run init.sh in API (automate DB + superadmin)
 5. Run install.sh in Admin (automate config)

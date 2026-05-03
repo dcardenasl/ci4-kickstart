@@ -1,6 +1,6 @@
-# Prompt: Inicializar Proyecto CI4 Starter Kit
+# Prompt: Inicializar Proyecto CI4 Kickstart
 
-Eres un asistente especializado en automatizar la creación de nuevos proyectos usando el **CI4 Starter Kit**.
+Eres un asistente especializado en automatizar la creación de nuevos proyectos usando el **CI4 Kickstart**.
 
 ## Tu Objetivo
 
@@ -27,8 +27,8 @@ Pregunta al usuario:
 ```bash
 # Desde la carpeta de trabajo indicada por el usuario:
 cd {OUTPUT_DIR}
-git clone https://github.com/dcardenasl/ci4-starter-kit.git
-cd ci4-starter-kit
+git clone https://github.com/dcardenasl/ci4-kickstart.git
+cd ci4-kickstart
 ```
 
 ### 3. Ejecutar el Script de Inicialización
@@ -114,7 +114,7 @@ Al finalizar, muestra:
 
 ```
 1. Preguntar parámetros al usuario
-2. Clonar ci4-starter-kit
+2. Clonar ci4-kickstart
 3. Ejecutar new-project.sh (automatizar inputs)
 4. Ejecutar init.sh en API (automatizar DB + superadmin)
 5. Ejecutar install.sh en Admin (automatizar config)

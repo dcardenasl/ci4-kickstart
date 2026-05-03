@@ -1,4 +1,4 @@
-# Contributing to ci4-starter-kit
+# Contributing to ci4-kickstart
 
 ## Overview
 
@@ -6,7 +6,7 @@ The kit consists of three independent repositories:
 
 | Repo | Role |
 |------|------|
-| [ci4-starter-kit](https://github.com/dcardenasl/ci4-starter-kit) | Orchestrator (`new-project.sh`, docs, this file) |
+| [ci4-kickstart](https://github.com/dcardenasl/ci4-kickstart) | Orchestrator (`new-project.sh`, docs, this file) |
 | [ci4-api-starter](https://github.com/dcardenasl/ci4-api-starter) | REST API template |
 | [ci4-admin-starter](https://github.com/dcardenasl/ci4-admin-starter) | Admin frontend template |
 
@@ -15,11 +15,12 @@ Contribute to whichever repo the change belongs to.
 ## Development Setup
 
 ```bash
-# Clone the orchestrator (includes sub-projects as git-ignored local dirs)
-git clone https://github.com/dcardenasl/ci4-starter-kit.git
-cd ci4-starter-kit
+# Clone the orchestrator
+git clone https://github.com/dcardenasl/ci4-kickstart.git
+cd ci4-kickstart
 
-# Clone the sub-projects for local development
+# Clone the sub-projects alongside (for local development)
+cd ..
 git clone https://github.com/dcardenasl/ci4-api-starter.git
 git clone https://github.com/dcardenasl/ci4-admin-starter.git
 
@@ -78,13 +79,40 @@ This kit uses [Semantic Versioning](https://semver.org/):
 - **MINOR** — new features, non-breaking additions to templates
 - **PATCH** — bug fixes, documentation updates, dependency bumps
 
-Update `CHANGELOG.md` with every meaningful change before releasing.
+## Release Process
+
+Releases are always cut from `main`. Since `main` only accepts merges via PR, the changelog update **must happen on `dev` as the last commit before opening the PR**.
+
+### Step-by-step
+
+1. **On `dev`, prepare the release commit:**
+
+   a. In `CHANGELOG.md`, rename `[Unreleased]` to `[x.y.z] — YYYY-MM-DD` and add a fresh empty `[Unreleased]` section above it. Update the footer comparison links.
+
+   b. Create `docs/releases/{repo}-release-vx.y.z.md` with a human-readable summary of what changed and an upgrade guide.
+
+   c. Commit:
+   ```bash
+   git commit -m "chore: release vx.y.z"
+   ```
+
+2. **Open the PR `dev → main`.** The PR body can reference the release notes file.
+
+3. **After the PR is merged, tag `main`:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git tag vx.y.z
+   git push origin vx.y.z
+   ```
+
+> **Never tag on `dev`** — tags mark stable releases and belong on `main` after the merge.
 
 ## Pull Request Checklist
 
 - [ ] Branch is off `dev`
 - [ ] All quality checks pass
-- [ ] `CHANGELOG.md` updated under `[Unreleased]`
+- [ ] `CHANGELOG.md` updated under `[Unreleased]` (or promoted to a version if this is a release PR)
 - [ ] No sensitive data (credentials, tokens) committed
 - [ ] CLAUDE.md updated if architecture or commands changed
 

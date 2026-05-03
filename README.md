@@ -1,4 +1,4 @@
-# CI4 Starter Kit
+# CI4 Kickstart
 
 A complete, production-ready starting point for administrative applications built with CodeIgniter 4. Includes a REST API backend and a server-rendered admin frontend — both fully implemented and ready to customize.
 
@@ -27,8 +27,8 @@ Browser → CI4 Admin (8082) → CI4 API (8080) → MySQL
 ### Create a new project
 
 ```bash
-git clone https://github.com/dcardenasl/ci4-starter-kit.git
-cd ci4-starter-kit
+git clone https://github.com/dcardenasl/ci4-kickstart.git
+cd ci4-kickstart
 bash new-project.sh
 ```
 

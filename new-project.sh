@@ -120,7 +120,7 @@ cd "$SCRIPT_DIR"
 # =============================================================================
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}${CYAN}║          CI4 Starter Kit — Nuevo Proyecto                    ║${RESET}"
+echo -e "${BOLD}${CYAN}║              CI4 Kickstart — Nuevo Proyecto                  ║${RESET}"
 echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo "  Crea dos proyectos independientes (API + Admin) a partir"
@@ -219,7 +219,7 @@ init_git() {
     # Verificar que .env está en .gitignore antes de hacer commit
     if git check-ignore -q .env 2>/dev/null; then
         git add . -q
-        if git commit -q -m "Initial commit from ci4-starter-kit" 2>/dev/null; then
+        if git commit -q -m "Initial commit from ci4-kickstart" 2>/dev/null; then
             print_ok "Git inicializado en ${label} con commit inicial"
         else
             print_warn "Git inicializado en ${label} pero el commit falló — configura git user.name/email y haz commit manualmente."
