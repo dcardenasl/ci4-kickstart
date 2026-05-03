@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-05-03
+
+### Added
+- README — Windows setup section (WSL 2 / Git Bash) with note about avoiding `/mnt/c` paths for performance
+
+### Fixed
+- `new-project.sh` — resolve `API_DIR` and `ADMIN_DIR` to absolute paths after cloning so subsequent `cd` operations work regardless of how the output directory was entered
+- `new-project.sh` — silence `git add` output during the initial commit step
+
 ## [1.0.0] — 2026-05-03
 
 ### Added
@@ -22,5 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project released under the name **ci4-kickstart** (renamed from the working name `ci4-starter-kit` during development)
 - Sub-projects (`ci4-api-starter`, `ci4-admin-starter`) live in their own independent GitHub repositories and are not bundled here
 
-[unreleased]: https://github.com/dcardenasl/ci4-kickstart/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/dcardenasl/ci4-kickstart/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/dcardenasl/ci4-kickstart/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/dcardenasl/ci4-kickstart/releases/tag/v1.0.0
