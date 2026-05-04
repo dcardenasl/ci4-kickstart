@@ -109,6 +109,27 @@ require_cmd() {
     command -v "$1" >/dev/null 2>&1 || die "Comando requerido no encontrado: '$1'. Instálalo antes de continuar."
 }
 
+# Validate that PHP meets minimum version. Aborts with a clear message otherwise.
+require_php_version() {
+    local min_major="$1"
+    local min_minor="$2"
+    local current
+    current="$(php -r 'echo PHP_VERSION;' 2>/dev/null)" || die "PHP no responde. Verifica tu instalación."
+
+    if ! php -r "exit(version_compare(PHP_VERSION, '${min_major}.${min_minor}.0', '>=') ? 0 : 1);" 2>/dev/null; then
+        die "Se requiere PHP ${min_major}.${min_minor}+ (encontrado: ${current})."
+    fi
+}
+
+# Validate Composer is at least version 2. Aborts otherwise.
+require_composer_v2() {
+    local version_line
+    version_line="$(composer --version 2>/dev/null | head -n1)" || die "Composer no responde."
+    if ! printf "%s" "$version_line" | grep -qE 'Composer.*version (2\.|[3-9]\.)'; then
+        die "Se requiere Composer 2.x o superior. Detectado: ${version_line}"
+    fi
+}
+
 # -----------------------------------------------------------------------------
 # Directorio del script (para regresar después de cd a subdirectorios)
 # -----------------------------------------------------------------------------
@@ -134,7 +155,13 @@ echo ""
 # =============================================================================
 print_header "Verificando prerequisitos"
 require_cmd git
-print_ok "git encontrado"
+require_cmd php
+require_cmd composer
+require_cmd npm
+require_cmd mysql
+require_php_version 8 2
+require_composer_v2
+print_ok "git, php (8.2+), composer (2.x), npm y mysql encontrados"
 
 # =============================================================================
 # Recolección de datos
