@@ -106,11 +106,13 @@ For commands to run **inside the generated/cloned sub-projects**, see their own 
 
 ### Authorization (RBAC)
 
-The kit ships a granular RBAC model: `applications × permissions × roles (× role_permissions) × memberships (× membership_roles)`. The single seeded application is `self` (`id=1`). Permission codes use a **dot separator** (`.`), not a colon (e.g. `iam.admin-access`, `users.write`). Reason: CI4's filter parser splits on `:` for arguments, so `permission:users:write` is silently truncated.
+The kit ships a granular RBAC model: `applications × permissions (× role_permissions) × roles × user_roles × users`. Permissions belong to an application (cross-app scoping is preserved through `permissions.application_id`); roles are global. The single seeded application is `self` (`id=1`). Permission codes use a **dot separator** (`.`), not a colon (e.g. `iam.admin-access`, `users.write`). Reason: CI4's filter parser splits on `:` for arguments, so `permission:users:write` is silently truncated.
 
-- **API side**: routes gate via the `permission:<code>` filter (e.g. `permission:iam.admin-access`). The JWT carries a `scope` claim with the user's effective permission codes; `EffectivePermissionsResolver` derives them from active memberships → roles → permissions.
+> **Schema note (2026-05-03 refactor):** the legacy pair `app_user_memberships` + `membership_roles` was collapsed into a single `user_roles` join table. Migrations `2026-05-03-100003` to `100007` perform the schema change; older planning docs under `docs/plans/` are historical.
+
+- **API side**: routes gate via the `permission:<code>` filter (e.g. `permission:iam.admin-access`). The JWT carries a `scope` claim with the user's effective permission codes; `EffectivePermissionsResolver` derives them from `user_roles → roles → role_permissions → permissions`.
 - **Admin side**: `session('user.permissions')` is populated at login from the API's `LoginResponse`. UI gating uses `has_permission(string $code)` (in `app/Helpers/auth_helper.php`).
-- **First user**: `php spark users:bootstrap-superadmin` creates the user and attaches the `superadmin` role via an `app_user_memberships` row. It requires `RbacBootstrapSeeder` to have run first.
+- **First user**: `php spark users:bootstrap-superadmin` creates the user and attaches the `superadmin` role via a `user_roles` row. It requires `RbacBootstrapSeeder` to have run first.
 
 ## Configuration Essentials
 
