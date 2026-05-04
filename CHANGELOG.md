@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `new-project.sh` — pre-clone prerequisite checks: `php >= 8.2`, `composer >= 2`, `npm`, and `mysql` client must be on PATH before any clone is attempted. Failing fast prevents the trap-cleanup-recover dance that used to happen when `init.sh` discovered a missing tool mid-bootstrap. Two new helpers: `require_php_version` and `require_composer_v2`.
+
+### Changed
+- IAM schema reference in `CLAUDE.md` updated to the consolidated `user_roles` shape (was: `app_user_memberships` + `membership_roles`). Generated projects now describe the correct schema out of the box.
+
 ## [1.0.1] — 2026-05-03
 
 ### Added
