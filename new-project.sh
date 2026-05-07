@@ -18,18 +18,27 @@ set -euo pipefail
 # Flags
 # ---------------------------------------------------------------------------
 AUTO_YES=false
+RESET_DB=false
 while [ $# -gt 0 ]; do
   case $1 in
     --yes|-y) AUTO_YES=true; shift ;;
+    --reset-db)
+      # Audit B11.3 (2026-05-07): drop the project DB before init.sh
+      # creates it. Used when a previous run failed mid-setup and left
+      # the DB in a partial state. Without this flag, re-running
+      # new-project.sh either dies at the directory-exists check or
+      # completes against a stale schema.
+      RESET_DB=true; shift ;;
     --help|-h)
-      printf "Usage: bash new-project.sh [--yes|-y]\n\n"
+      printf "Usage: bash new-project.sh [--yes|-y] [--reset-db]\n\n"
       printf "Options:\n"
-      printf "  --yes, -y   Auto-confirm the '¿Continuar?' prompt\n"
-      printf "  --help      Show this help\n"
+      printf "  --yes, -y      Auto-confirm the '¿Continuar?' prompt\n"
+      printf "  --reset-db     Drop the project DB before init (recovery from partial setup)\n"
+      printf "  --help         Show this help\n"
       exit 0
       ;;
     *)
-      print_err "Unknown option: $1"
+      printf "Unknown option: %s\n" "$1" >&2
       exit 1
       ;;
   esac
@@ -280,6 +289,24 @@ echo ""
 echo -e "  ${YELLOW}init.sh tomará el control a continuación.${RESET}"
 echo -e "  Te pedirá: configuración de DB, credenciales del superadmin, etc."
 echo ""
+
+# Audit B11.3 (2026-05-07): when --reset-db was passed, drop the target
+# DB before init.sh runs so a partial previous run can't pollute the new
+# setup. Best-effort: connection failures are warnings, not hard fails —
+# init.sh will fail predictably if the DB really is unreachable.
+if [ "$RESET_DB" = "true" ]; then
+  if [ -n "${CI4_DB_NAME:-}" ] && command -v mysql >/dev/null 2>&1; then
+    print_warn "  --reset-db: dropping database '${CI4_DB_NAME}' (and '${CI4_TEST_DB_NAME:-${CI4_DB_NAME}_test}') before init.sh."
+    MYSQL_PWD="${CI4_DB_PASS:-}" mysql \
+      -h "${CI4_DB_HOST:-127.0.0.1}" \
+      -P "${CI4_DB_PORT:-3306}" \
+      -u "${CI4_DB_USER:-root}" \
+      -e "DROP DATABASE IF EXISTS \`${CI4_DB_NAME}\`; DROP DATABASE IF EXISTS \`${CI4_TEST_DB_NAME:-${CI4_DB_NAME}_test}\`;" \
+      2>&1 | sed 's/^/    /' || print_warn "  --reset-db: drop failed (DB unreachable?). init.sh will surface the real error."
+  else
+    print_warn "  --reset-db: skipped — needs CI4_DB_NAME exported and 'mysql' CLI available."
+  fi
+fi
 
 cd "$API_DIR"
 bash init.sh
