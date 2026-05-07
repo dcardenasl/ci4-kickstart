@@ -11,11 +11,25 @@ A complete, production-ready starting point for administrative applications buil
 | [`ci4-domain-starter`](https://github.com/dcardenasl/ci4-domain-starter) *(opt-in)* | Domain app template — owns business logic, delegates auth to the API hub | 8090 |
 
 **Architecture:**
+
+```mermaid
+flowchart LR
+    Browser["Browser"]
+    Admin["CI4 Admin Starter<br/>:8082"]
+    API["CI4 API Starter<br/>(hub) :8080"]
+    Domain["CI4 Domain Starter<br/>(opt-in) :8090"]
+    HubDB[("Hub DB<br/>users · roles · perms")]
+    DomainDB[("Domain DB<br/>business tables")]
+
+    Browser --> Admin
+    Admin -->|"REST + JWT"| API
+    Browser -.->|"Bearer JWT"| Domain
+    Domain -.->|"POST /auth/introspect<br/>POST /auth/service-token"| API
+    API --- HubDB
+    Domain --- DomainDB
 ```
-Browser → CI4 Admin (8082) → CI4 API (8080)  → MySQL
-                                  ↑ JWT introspect
-                                  └─ CI4 Domain (8090) → its own MySQL DB
-```
+
+Solid arrows = HTTP traffic on every request. Dashed = setup-time or cached calls (introspect TTL 60s, service-token cached until expiry).
 
 ## Quick Start
 
@@ -56,6 +70,36 @@ The script will:
 7. Print the commands to start all processes
 
 Total time: ~5 minutes (mostly waiting on `composer install`); add ~30s if you opt in to the domain starter.
+
+### What `new-project.sh` does, step by step
+
+```mermaid
+flowchart TD
+    Start([bash new-project.sh])
+    Prompts["Prompt: name, output dir,<br/>include domain? + app code + port"]
+    CloneAPI["git clone ci4-api-starter → {name}-api"]
+    CloneAdmin["git clone ci4-admin-starter → {name}-admin"]
+    CloneDomain["git clone ci4-domain-starter → {name}-domain"]
+    APIInit["{name}-api: bash init.sh<br/>(deps, .env, DB, migrations, superadmin)"]
+    Bootstrap["{name}-api: spark apps:bootstrap<br/>--create-api-key → captures API_KEY"]
+    StartHub["spark serve :8080 (background)"]
+    Login["POST /auth/login → captures JWT"]
+    DomainInit["{name}-domain: bash init.sh --skip-server<br/>(env-driven, no prompts)"]
+    StopHub["kill background hub"]
+    AdminInstall["{name}-admin: bash install.sh<br/>(.env, composer, template refs)"]
+    Done([Print run-the-servers help])
+
+    Start --> Prompts
+    Prompts --> CloneAPI --> CloneAdmin
+    CloneAdmin -->|"include domain = y"| CloneDomain --> APIInit
+    CloneAdmin -->|"include domain = n"| APIInit
+    CloneDomain --> APIInit
+    APIInit -->|"include domain = y"| Bootstrap --> StartHub --> Login --> DomainInit --> StopHub --> AdminInstall
+    APIInit -->|"include domain = n"| AdminInstall
+    AdminInstall --> Done
+```
+
+If anything fails mid-flow, `cleanup_on_error` kills the background hub (if any) and `rm -rf` only the directories that the current run created — nothing pre-existing is touched.
 
 ## What the setup scripts do
 
