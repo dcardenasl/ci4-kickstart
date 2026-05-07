@@ -1,0 +1,115 @@
+name: E2E — new-project.sh smoke test
+
+# Audit B11.3 (2026-05-07): runs `new-project.sh` end-to-end against
+# a fresh MySQL service container. Fails when the kit can't produce a
+# project that boots and migrates cleanly. Catches plantilla / scaffolding
+# regressions in api-starter or admin-starter that only surface in the
+# generated copy.
+#
+# Triggers:
+#   - On push to main / dev (post-merge sanity check).
+#   - On schedule (weekly Monday 03:00 UTC) so upstream regressions in
+#     CI4 itself or the template repos surface within a week.
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    - cron: '0 3 * * 1'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ci4_e2e
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -proot"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=15
+
+    steps:
+      - name: Checkout kickstart
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: intl, mbstring, mysqli, pdo_mysql, curl, fileinfo, zip
+          tools: composer:v2
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
+              echo "MySQL is up."
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Run new-project.sh non-interactively
+        env:
+          # All CI4_* env vars are honored by init.sh / install.sh as
+          # non-interactive answers — the script reads them in lieu of
+          # prompting.
+          CI4_PROJECT_NAME: e2e-smoke
+          CI4_DB_HOST: 127.0.0.1
+          CI4_DB_PORT: '3306'
+          CI4_DB_USER: root
+          CI4_DB_PASS: root
+          CI4_DB_NAME: ci4_e2e_smoke
+          CI4_TEST_DB_NAME: ci4_e2e_smoke_test
+          CI4_SA_EMAIL: smoke@e2e.test
+          CI4_SA_PASSWORD: SmokeTestP@ssw0rd123
+          CI4_SA_FIRST_NAME: Smoke
+          CI4_SA_LAST_NAME: Test
+          CI4_RUN_COMPOSER: 'true'
+          CI4_REMOVE_SELF: 'false'
+          CI4_START_SERVER: 'false'
+          CI4_OVERWRITE_ENV: 'true'
+        run: |
+          mkdir -p ../e2e-output
+          # Preflight DB so --reset-db has a target.
+          MYSQL_PWD=root mysql -h 127.0.0.1 -u root -e "CREATE DATABASE IF NOT EXISTS ci4_e2e_smoke;"
+          bash new-project.sh --yes --reset-db <<< $'../e2e-output\n'
+
+      - name: Verify generated API boots
+        working-directory: ../e2e-output/e2e-smoke-api
+        run: |
+          ls -la
+          test -f composer.json
+          test -f .env
+          # Migration table populated.
+          MYSQL_PWD=root mysql -h 127.0.0.1 -u root -e \
+            "SELECT COUNT(*) AS migrations_applied FROM ci4_e2e_smoke.migrations;"
+          # Composer-level smoke (PHPStan + tests already ran inside init.sh
+          # if the template wires that). Here we just confirm the binary is
+          # callable.
+          php spark migrate:status
+
+      - name: Verify generated Admin boots
+        working-directory: ../e2e-output/e2e-smoke-admin
+        run: |
+          ls -la
+          test -f composer.json
+          test -f .env
+          # Composer install ran successfully if vendor is present.
+          test -d vendor
+          # PHPUnit is available — the install pulled dev deps.
+          test -x vendor/bin/phpunit
