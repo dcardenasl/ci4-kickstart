@@ -8,10 +8,13 @@ A complete, production-ready starting point for administrative applications buil
 |---------|-------------|------|
 | [`ci4-api-starter`](https://github.com/dcardenasl/ci4-api-starter) | REST API backend — JWT auth, RBAC, CRUD scaffolding, OpenAPI docs | 8080 |
 | [`ci4-admin-starter`](https://github.com/dcardenasl/ci4-admin-starter) | Admin frontend — Tailwind CSS, Alpine.js, all modules wired | 8082 |
+| [`ci4-domain-starter`](https://github.com/dcardenasl/ci4-domain-starter) *(opt-in)* | Domain app template — owns business logic, delegates auth to the API hub | 8090 |
 
 **Architecture:**
 ```
-Browser → CI4 Admin (8082) → CI4 API (8080) → MySQL
+Browser → CI4 Admin (8082) → CI4 API (8080)  → MySQL
+                                  ↑ JWT introspect
+                                  └─ CI4 Domain (8090) → its own MySQL DB
 ```
 
 ## Quick Start
@@ -44,14 +47,15 @@ bash new-project.sh
 ```
 
 The script will:
-1. Ask for a project name and output directory
-2. Copy both sub-projects (no git history, no vendor files)
+1. Ask for a project name, output directory, and whether to include a domain starter
+2. Clone the sub-projects from GitHub (no git history, no vendor files)
 3. Initialize fresh git repos for each
 4. Walk you through API setup: database config, migrations, superadmin
-5. Walk you through Admin setup: API URL, ports, app name
-6. Print the commands to start all three processes
+5. **If domain included:** register the application in the hub via `apps:bootstrap --create-api-key`, capture the X-App-Key, start the hub in background, capture a superadmin JWT via login, run domain `init.sh --skip-server` non-interactively, stop the hub
+6. Walk you through Admin setup: API URL, ports, app name
+7. Print the commands to start all processes
 
-Total time: ~5 minutes (mostly waiting on `composer install`).
+Total time: ~5 minutes (mostly waiting on `composer install`); add ~30s if you opt in to the domain starter.
 
 ## What the setup scripts do
 
@@ -81,6 +85,9 @@ cd my-app-admin && php spark serve --port 8082
 
 # Terminal 3 — Tailwind CSS watcher
 cd my-app-admin && npm run dev:css
+
+# Terminal 4 (optional) — Domain server
+cd my-app-domain && php spark serve --port 8090
 ```
 
 Then open [http://localhost:8082](http://localhost:8082) and log in with your superadmin credentials.

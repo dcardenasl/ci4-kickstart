@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **KICK-001 · domain starter opcional** (2026-05-07) — `new-project.sh` ofrece clonar y configurar `ci4-domain-starter` como tercer repo (`{name}-domain`) junto al API hub y al admin. Al responder `y` al prompt nuevo:
+  - clona desde `github.com/dcardenasl/ci4-domain-starter` (mismo patrón que api/admin),
+  - tras `init.sh` del API, corre `php spark apps:bootstrap <code> --create-api-key` (consume API-007 en api-starter), captura `API_KEY=apk_...` y `APP_ID=N` desde stdout,
+  - levanta el hub en background, hace login con el superadmin recién creado, captura el JWT,
+  - exporta `CI4_DOMAIN_HUB_URL`, `CI4_DOMAIN_API_KEY`, `CI4_DOMAIN_ADMIN_TOKEN`, `CI4_DOMAIN_DB_*`, `CI4_DOMAIN_APP_CODE`,
+  - corre `domain-starter/init.sh --skip-server` (no-TTY: domain init.sh respeta env vars cuando están seteadas),
+  - apaga el hub.
+  `cleanup_on_error` mata `HUB_PID` antes de `rm -rf` los dirs si algo falla a mitad. Tres prompts nuevos (`Incluir domain starter? (y/N)`, `Application code [{name}-domain]`, `Domain port [8090]`) con env-var overrides (`CI4_INCLUDE_DOMAIN`, `CI4_DOMAIN_APP_CODE`, `CI4_DOMAIN_PORT`). Resumen final actualizado con Terminal 4.
 - `new-project.sh` — pre-clone prerequisite checks: `php >= 8.2`, `composer >= 2`, `npm`, and `mysql` client must be on PATH before any clone is attempted. Failing fast prevents the trap-cleanup-recover dance that used to happen when `init.sh` discovered a missing tool mid-bootstrap. Two new helpers: `require_php_version` and `require_composer_v2`.
 
 ### Changed
