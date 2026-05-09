@@ -40,11 +40,21 @@ bash new-project.sh
 The script will ask:
 1. **Project name** → Use the user's value
 2. **Output directory** → Use the user's value
+3. **Include domain starter?** → Default `N`. Answer `y` only if the user explicitly asks for it or needs a domain app that delegates auth to the hub.
+4. *(if you answered y)* **Application code** → Default `{project-name}-domain`. Accept or change.
+5. *(if you answered y)* **Domain port** → Default `8090`. Accept.
 
 For questions asked by `init.sh` (in the API):
 - Database host, user, password, name
 - JWT_SECRET_KEY (generate automatically if not provided)
 - Superadmin credentials
+
+If you opted in to the domain starter, **the script orchestrates automatically** (no further prompts):
+- Registers the application in the hub via `apps:bootstrap --create-api-key` and captures the X-App-Key
+- Starts the hub in background
+- Logs in with the just-created superadmin and captures the JWT
+- Runs `domain init.sh --skip-server` with all coordinates pre-supplied
+- Stops the hub
 
 For questions asked by `install.sh` (in the Admin):
 - API repository name
@@ -67,6 +77,10 @@ php spark serve --port {ADMIN_PORT}
 # Terminal 3: CSS Watcher (in another terminal)
 cd {ADMIN_DIR}
 npm run dev:css
+
+# Terminal 4 (if domain starter was included):
+cd {DOMAIN_DIR}
+php spark serve --port {DOMAIN_PORT}
 ```
 
 Test by accessing `http://localhost:{ADMIN_PORT}` and trying:
