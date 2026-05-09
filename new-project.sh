@@ -340,6 +340,17 @@ init_git "$ADMIN_DIR" "${PROJECT_NAME}-admin"
 [ "$INCLUDE_DOMAIN" = true ] && init_git "$DOMAIN_DIR" "${PROJECT_NAME}-domain"
 
 # =============================================================================
+# Derive admin install defaults from PROJECT_NAME when not explicitly set.
+# install.sh (ci4-admin-starter) reads these; filling them in here means a
+# CI caller only needs to supply DB creds and SA details — not admin branding.
+# =============================================================================
+: "${CI4_API_NAME:=${PROJECT_NAME}-api}"
+: "${CI4_API_GITHUB_URL:=https://github.com/yourusername/${PROJECT_NAME}-api}"
+: "${CI4_API_BASE_URL:=http://localhost:8080}"
+: "${CI4_APP_NAME:=${PROJECT_NAME} Admin}"
+: "${CI4_ADMIN_PORT:=8082}"
+
+# =============================================================================
 # Export CI4_* env vars so child scripts inherit them
 # =============================================================================
 export CI4_DB_HOST CI4_DB_PORT CI4_DB_USER CI4_DB_PASS CI4_DB_NAME CI4_TEST_DB_NAME
