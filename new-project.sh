@@ -387,7 +387,29 @@ if [ "$RESET_DB" = "true" ]; then
 fi
 
 cd "$API_DIR"
-bash init.sh
+if [ -n "${CI4_DB_HOST:-}" ]; then
+  # Non-interactive mode: pipe answers to every read prompt in init.sh so a
+  # fresh GitHub clone (which may predate CI4_DB_* env-var support) still
+  # gets the right data. --skip-server suppresses the final "Start server?" prompt.
+  _sa_pass="${CI4_SA_PASSWORD:-}"
+  {
+    printf '%s\n' "${CI4_DB_HOST}"
+    printf '%s\n' "${CI4_DB_PORT:-3306}"
+    printf '%s\n' "${CI4_DB_USER:-root}"
+    printf '%s\n' "${CI4_DB_PASS:-}"
+    printf '%s\n' "${CI4_DB_NAME}"
+    printf '%s\n' "${CI4_TEST_DB_NAME:-${CI4_DB_NAME}_test}"
+    if [ -n "${CI4_SA_EMAIL:-}" ] && [ "${#_sa_pass}" -ge 8 ]; then
+      printf 'y\n%s\n%s\n%s\n%s\n' \
+        "${CI4_SA_EMAIL}" "${_sa_pass}" \
+        "${CI4_SA_FIRST_NAME:-Super}" "${CI4_SA_LAST_NAME:-Admin}"
+    else
+      printf 'n\n'
+    fi
+  } | bash init.sh --skip-server
+else
+  bash init.sh
+fi
 cd "$SCRIPT_DIR"
 
 # =============================================================================
