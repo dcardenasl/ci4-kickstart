@@ -511,7 +511,14 @@ echo -e "  responde ${BOLD}N${RESET} para conservarlo y poder reconfigurar en el
 echo ""
 
 cd "$ADMIN_DIR"
-bash install.sh
+if [ -n "${CI4_DB_HOST:-}" ]; then
+  # Non-interactive: install.sh already reads CI4_API_NAME / CI4_API_BASE_URL /
+  # CI4_APP_NAME / etc. via env vars; only the final "¿Continuar?" confirm still
+  # needs a piped answer.
+  printf 'y\n' | bash install.sh
+else
+  bash install.sh
+fi
 cd "$SCRIPT_DIR"
 
 # =============================================================================
