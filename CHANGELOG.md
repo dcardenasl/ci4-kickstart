@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - apaga el hub.
   `cleanup_on_error` mata `HUB_PID` antes de `rm -rf` los dirs si algo falla a mitad. Tres prompts nuevos (`Incluir domain starter? (y/N)`, `Application code [{name}-domain]`, `Domain port [8090]`) con env-var overrides (`CI4_INCLUDE_DOMAIN`, `CI4_DOMAIN_APP_CODE`, `CI4_DOMAIN_PORT`). Resumen final actualizado con Terminal 4.
 - `new-project.sh` — pre-clone prerequisite checks: `php >= 8.2`, `composer >= 2`, `npm`, and `mysql` client must be on PATH before any clone is attempted. Failing fast prevents the trap-cleanup-recover dance that used to happen when `init.sh` discovered a missing tool mid-bootstrap. Two new helpers: `require_php_version` and `require_composer_v2`.
+- **`--reset-db` flag** — `new-project.sh --reset-db` drops and recreates the API and admin databases before setup. Lets developers recover cleanly from a partial run without manual `DROP DATABASE` surgery; the flag is documented in the script's `--help` output.
+- **`.github/pull_request_template.md`** — PR template tailored for bash-script changes: checklist items for shellcheck, `--help` output accuracy, idempotency checks, and the prerequisite-validation path.
+- **GitHub Actions workflows** — `.github/workflows/release.yml` (extracts matching CHANGELOG section on `v*.*.*` tag push and creates a GitHub Release) and `.github/workflows/e2e.yml` (runs `new-project.sh` against a real MySQL container on push + PR to validate the full bootstrap flow end-to-end).
 
 ### Changed
 - IAM schema reference in `CLAUDE.md` updated to the consolidated `user_roles` shape (was: `app_user_memberships` + `membership_roles`). Generated projects now describe the correct schema out of the box.
