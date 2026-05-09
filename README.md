@@ -1,6 +1,12 @@
 # CI4 Kickstart
 
-A complete, production-ready starting point for administrative applications built with CodeIgniter 4. Includes a REST API backend and a server-rendered admin frontend — both fully implemented and ready to customize.
+An opinionated starting point for administrative applications built with CodeIgniter 4. Includes a REST API backend and a server-rendered admin frontend — both fully implemented and ready to customize.
+
+## Who is this for
+
+This is the stack I use for my own projects. It reflects how I structure CI4 applications: DTO-first, with granular RBAC, CRUD scaffolding, and a clean separation between the API hub and domain apps.
+
+It's well-documented and free to use. That said: there's no support contract, no stability guarantee between major versions, and the conventions are opinionated toward my own workflow. If that fits yours, great.
 
 ## What's Inside
 
