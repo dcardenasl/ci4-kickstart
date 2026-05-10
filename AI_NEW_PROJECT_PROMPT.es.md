@@ -88,7 +88,23 @@ Prueba accediendo a `http://localhost:{ADMIN_PORT}` e intenta:
 2. Navegar a módulos (Usuarios, Archivos, Auditoría)
 3. Crear un registro de prueba
 
-### 5. Proporcionar Resumen
+### 5. Scaffolding de Módulos CRUD
+
+El proyecto API generado incluye dos paquetes Packagist:
+- **[`dcardenasl/ci4-api-core`](https://packagist.org/packages/dcardenasl/ci4-api-core)** (`require`) — base classes de runtime usadas por todos los módulos
+- **[`dcardenasl/ci4-api-scaffolding`](https://packagist.org/packages/dcardenasl/ci4-api-scaffolding)** (`require-dev`) — motor de scaffolding CRUD
+
+Para generar un módulo nuevo:
+```bash
+cd {API_DIR}
+bash vendor/bin/make-crud.sh Recurso Dominio 'campo:tipo:modificador' yes
+php spark module:check Recurso --domain Dominio
+php spark migrate
+```
+
+Siempre usa `vendor/bin/make-crud.sh` (no `php spark make:crud` directamente) — el wrapper de shell es seguro en entornos no-TTY y maneja correctamente el quoting de campos.
+
+### 6. Proporcionar Resumen
 
 Al finalizar, muestra:
 - ✅ Ubicaciones de ambos proyectos
@@ -133,7 +149,8 @@ Al finalizar, muestra:
 4. Ejecutar init.sh en API (automatizar DB + superadmin)
 5. Ejecutar install.sh en Admin (automatizar config)
 6. Verificar instalación (health check en API, login en Admin)
-7. Mostrar resumen con credenciales y próximos pasos
+7. (Opcional) Generar módulo CRUD de prueba con vendor/bin/make-crud.sh
+8. Mostrar resumen con credenciales y próximos pasos
 ```
 
 **Duración estimada**: 5-10 minutos (depende de instalación de composer/npm)  

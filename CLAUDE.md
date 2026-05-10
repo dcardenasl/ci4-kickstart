@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 For cross-repo context (current milestone, blocked tasks), read `../TASKS.md`.
 
-> **Note (audit B11.5, 2026-05-07):** This is the canonical orchestrator-level doc. A lighter `CLAUDE.md` sits at the workspace root (`../CLAUDE.md`) but it's a navigational stub that points readers here for the long-form. Sub-repo-specific `CLAUDE.md` files (`ci4-api-starter`, `ci4-admin-starter`, `ci4-api-crud-maker`) own their own architecture / patterns / commands.
+> **Note (audit B11.5, 2026-05-07):** This is the canonical orchestrator-level doc. A lighter `CLAUDE.md` sits at the workspace root (`../CLAUDE.md`) but it's a navigational stub that points readers here for the long-form. Sub-repo-specific `CLAUDE.md` files (`ci4-api-starter`, `ci4-admin-starter`, `ci4-api-core`, `ci4-api-scaffolding`) own their own architecture / patterns / commands.
 
 ## Repository Overview
 
@@ -25,6 +25,7 @@ For cross-repo context (current milestone, blocked tasks), read `../TASKS.md`.
    - JWT authentication with **granular RBAC** (applications × permissions × roles × memberships)
    - Advanced query filtering, audit trails, and metrics
    - Full OpenAPI documentation with auto-generation
+   - Powered by two Packagist packages: [`dcardenasl/ci4-api-core`](https://packagist.org/packages/dcardenasl/ci4-api-core) (runtime: base classes, `require`) and [`dcardenasl/ci4-api-scaffolding`](https://packagist.org/packages/dcardenasl/ci4-api-scaffolding) (dev: `make:crud` engine, `require-dev`)
 
 2. **[ci4-admin-starter](https://github.com/dcardenasl/ci4-admin-starter)** — Server-rendered administrative frontend (port 8082)
    - Consumes the REST API from ci4-api-starter
@@ -211,7 +212,7 @@ apiClient.apiPrefix = '/api/v1'
 
 ## Getting Help
 
-- **API questions?** See [ci4-api-starter CLAUDE.md](https://github.com/dcardenasl/ci4-api-starter) and its `docs/template/ARCHITECTURE_CONTRACT.md`
+- **API questions?** See [ci4-api-starter CLAUDE.md](https://github.com/dcardenasl/ci4-api-starter) and `vendor/dcardenasl/ci4-api-core/docs/ARCHITECTURE_CONTRACT.md` (authoritative architecture contract)
 - **Admin questions?** See [ci4-admin-starter CLAUDE.md](https://github.com/dcardenasl/ci4-admin-starter) and its `docs/ARCHITECTURE.md`
 - **General CodeIgniter?** Check [CodeIgniter 4 documentation](https://codeigniter.com/user_guide/)
 

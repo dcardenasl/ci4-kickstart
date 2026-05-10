@@ -9,8 +9,10 @@ The kit consists of three independent repositories:
 | [ci4-kickstart](https://github.com/dcardenasl/ci4-kickstart) | Orchestrator (`new-project.sh`, docs, this file) |
 | [ci4-api-starter](https://github.com/dcardenasl/ci4-api-starter) | REST API template |
 | [ci4-admin-starter](https://github.com/dcardenasl/ci4-admin-starter) | Admin frontend template |
+| [ci4-api-core](https://github.com/dcardenasl/ci4-api-core) | Runtime base classes — `dcardenasl/ci4-api-core` on Packagist (`require`) |
+| [ci4-api-scaffolding](https://github.com/dcardenasl/ci4-api-scaffolding) | CRUD scaffolding engine — `dcardenasl/ci4-api-scaffolding` on Packagist (`require-dev`) |
 
-Contribute to whichever repo the change belongs to.
+Contribute to whichever repo the change belongs to. Changes to base classes (`ApiController`, `BaseCrudService`, etc.) go in `ci4-api-core`. Changes to scaffolding templates or generators go in `ci4-api-scaffolding`.
 
 ## Development Setup
 

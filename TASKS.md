@@ -15,7 +15,13 @@
 
 ## 🟡 Próximo
 
-- **[CORE-007]** Actualizar referencias en `new-project.sh` y AI prompts (`AI_NEW_PROJECT_PROMPT.{en,es}.md`) para reflejar `dcardenasl/ci4-api-core` v1.0.0 publicado en Packagist. Bloqueado por CORE-006 (publicación).
+*(vacío)*
+
+---
+
+## ✅ Completadas
+
+- **[CORE-007]** ✅ (2026-05-10) — `CLAUDE.md`, `README.md`, `CONTRIBUTING.md` y AI prompts actualizados con el modelo de dos paquetes: `dcardenasl/ci4-api-core ^0.4` (runtime, `require`) y `dcardenasl/ci4-api-scaffolding ^0.2` (dev, `require-dev`). Referencia a `ci4-api-crud-maker` eliminada. Sección de scaffolding añadida a los AI prompts.
 
 ---
 

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CORE-007 · modelo de dos paquetes documentado** (2026-05-10) — `CLAUDE.md`, `README.md`, `CONTRIBUTING.md` y ambos AI prompts actualizados para reflejar que `ci4-api-starter` depende de dos paquetes Packagist separados: `dcardenasl/ci4-api-core ^0.4` (`require` — base classes runtime) y `dcardenasl/ci4-api-scaffolding ^0.2` (`require-dev` — motor `make:crud` + `vendor/bin/make-crud.sh`). Referencia a `ci4-api-crud-maker` eliminada. Sección de scaffolding añadida a los AI prompts con instrucciones sobre `vendor/bin/make-crud.sh`.
 - **KICK-001 · domain starter opcional** (2026-05-07) — `new-project.sh` ofrece clonar y configurar `ci4-domain-starter` como tercer repo (`{name}-domain`) junto al API hub y al admin. Al responder `y` al prompt nuevo:
   - clona desde `github.com/dcardenasl/ci4-domain-starter` (mismo patrón que api/admin),
   - tras `init.sh` del API, corre `php spark apps:bootstrap <code> --create-api-key` (consume API-007 en api-starter), captura `API_KEY=apk_...` y `APP_ID=N` desde stdout,

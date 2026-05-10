@@ -88,7 +88,23 @@ Test by accessing `http://localhost:{ADMIN_PORT}` and trying:
 2. Navigate to modules (Users, Files, Audit)
 3. Create a test record
 
-### 5. Provide Summary
+### 5. Scaffolding New CRUD Modules
+
+The generated API project ships two Packagist packages:
+- **[`dcardenasl/ci4-api-core`](https://packagist.org/packages/dcardenasl/ci4-api-core)** (`require`) — runtime base classes used by every module
+- **[`dcardenasl/ci4-api-scaffolding`](https://packagist.org/packages/dcardenasl/ci4-api-scaffolding)** (`require-dev`) — CRUD scaffolding engine
+
+To generate a new module:
+```bash
+cd {API_DIR}
+bash vendor/bin/make-crud.sh Resource Domain 'field:type:modifier' yes
+php spark module:check Resource --domain Domain
+php spark migrate
+```
+
+Always use `vendor/bin/make-crud.sh` (not `php spark make:crud` directly) — the shell wrapper is safe in non-TTY environments and handles field string quoting correctly.
+
+### 6. Provide Summary
 
 When finished, show:
 - ✅ Locations of both projects
@@ -133,7 +149,8 @@ When finished, show:
 4. Run init.sh in API (automate DB + superadmin)
 5. Run install.sh in Admin (automate config)
 6. Verify installation (health check on API, login on Admin)
-7. Show summary with credentials and next steps
+7. (Optional) Scaffold a test CRUD module with vendor/bin/make-crud.sh
+8. Show summary with credentials and next steps
 ```
 
 **Estimated duration**: 5-10 minutes (depends on composer/npm installation)  

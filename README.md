@@ -16,6 +16,13 @@ It's well-documented and free to use. That said: there's no support contract, no
 | [`ci4-admin-starter`](https://github.com/dcardenasl/ci4-admin-starter) | Admin frontend — Tailwind CSS, Alpine.js, all modules wired | 8082 |
 | [`ci4-domain-starter`](https://github.com/dcardenasl/ci4-domain-starter) *(opt-in)* | Domain app template — owns business logic, delegates auth to the API hub | 8090 |
 
+The generated API project is powered by two Packagist packages:
+
+| Package | Type | Role |
+|---------|------|------|
+| [`dcardenasl/ci4-api-core`](https://packagist.org/packages/dcardenasl/ci4-api-core) | `require` | Runtime base classes — `ApiController`, `BaseCrudService`, `BaseRequestDTO`, `BaseAuditableModel`, etc. |
+| [`dcardenasl/ci4-api-scaffolding`](https://packagist.org/packages/dcardenasl/ci4-api-scaffolding) | `require-dev` | CRUD scaffolding engine — `php spark make:crud`, `vendor/bin/make-crud.sh`, `module:check` |
+
 **Architecture:**
 
 ```mermaid
@@ -145,9 +152,12 @@ Then open [http://localhost:8082](http://localhost:8082) and log in with your su
 ## Adding features
 
 **New API endpoint:**
+
+Scaffolding is provided by [`dcardenasl/ci4-api-scaffolding`](https://packagist.org/packages/dcardenasl/ci4-api-scaffolding) (installed as `require-dev` in the generated API project).
+
 ```bash
 cd my-app-api
-bash bin/make-crud.sh Product Catalog \
+bash vendor/bin/make-crud.sh Product Catalog \
   'name:string:required|searchable,price:decimal:required|filterable' \
   yes
 php spark module:check Product --domain Catalog
