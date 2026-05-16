@@ -43,6 +43,8 @@ El script te pedirá:
 3. **¿Incluir domain starter?** → Por defecto `N`. Responde `y` solo si el usuario lo pide explícitamente o necesita una app de dominio que delegue auth al hub.
 4. *(si respondiste y)* **Application code** → Por defecto `{nombre-proyecto}-domain`. Acepta o cambia.
 5. *(si respondiste y)* **Domain port** → Por defecto `8090`. Acepta.
+6. **¿Incluir BFF starter?** → Por defecto `N`. Responde `y` si el usuario necesita un gateway stateless para una SPA / cliente móvil (CORS multi-origen, forward-only auth).
+7. *(si respondiste y)* **BFF port** → Por defecto `8088`. Acepta.
 
 Para las preguntas que hace `init.sh` (en el API):
 - Database host, user, password, name
@@ -55,6 +57,12 @@ Si pediste el domain starter, **el script orquesta automáticamente** (sin pedir
 - Hace login con el superadmin recién creado y captura el JWT
 - Corre `domain init.sh --skip-server` con todas las coords pre-pobladas
 - Apaga el hub
+
+Si pediste el BFF starter, **el script orquesta automáticamente** (sin pedirte nada):
+- Exporta `BFF_HUB_URL=http://localhost:8080` (la API recién creada)
+- Exporta `BFF_DOMAIN_URL=http://localhost:{DOMAIN_PORT}` (si incluiste el domain; vacío si no)
+- Exporta `BFF_ALLOWED_ORIGINS` (default `http://localhost:5173,http://localhost:3000`; override con `CI4_BFF_ALLOWED_ORIGINS`)
+- Corre `bff init.sh --skip-server` (sin DB, sin bootstrap del hub — el BFF es stateless y reenvía el `Authorization` del cliente al upstream)
 
 Para las preguntas que hace `install.sh` (en el Admin):
 - Nombre del repo del API
@@ -81,6 +89,10 @@ npm run dev:css
 # Terminal 4 (si incluiste domain starter):
 cd {DOMAIN_DIR}
 php spark serve --port {DOMAIN_PORT}
+
+# Terminal 5 (si incluiste BFF starter):
+cd {BFF_DIR}
+php spark serve --port {BFF_PORT}
 ```
 
 Prueba accediendo a `http://localhost:{ADMIN_PORT}` e intenta:

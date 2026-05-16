@@ -38,11 +38,20 @@ For cross-repo context (current milestone, blocked tasks), read `../TASKS.md`.
    - Includes `Hub` config, `HubClient`, `DomainAuthFilter`, `DomainPermissions` catalog, and the `domain:sync-permissions` command
    - When opted in via `Incluir domain starter? (y/N)` (or `CI4_INCLUDE_DOMAIN=y`), `new-project.sh` orchestrates end-to-end: registers the application in the hub via `apps:bootstrap --create-api-key`, captures the X-App-Key, logs in to capture a superadmin JWT, runs domain `init.sh --skip-server` non-TTY, and stops the hub
 
+4. **[ci4-bff-starter](https://github.com/dcardenasl/ci4-bff-starter)** *(optional, BFF-006)* — Backend-for-Frontend template (port 8088)
+   - **Stateless gateway** over the hub (and optionally a domain app) for decoupled clients (SPA, mobile)
+   - No database, no JWT validation: it forwards the client's `Authorization` header upstream and lets the hub/domain validate it
+   - Includes `Config\Bff` (`hubUrl`, `domainUrl`, `allowedOrigins` parsed from `BFF_ALLOWED_ORIGINS`), `HubClient` (service-token cache, optional), `Config\Cors` reading the BFF allow-list
+   - When opted in via `Incluir BFF starter? (y/N)` (or `CI4_INCLUDE_BFF=y`), `new-project.sh` runs BFF `init.sh --skip-server` with `BFF_HUB_URL` (pointing at the API just created), `BFF_DOMAIN_URL` (the domain if included) and `BFF_ALLOWED_ORIGINS` pre-populated — no hub bootstrap, no DB
+
 **Architecture flow:**
 ```
-Browser → CI4 Admin Starter (8082) → CI4 API Starter (8080) → Database
-                                          ↑ JWT introspect
-                                          └─ CI4 Domain Starter (8090) → its own DB
+Browser/Admin → CI4 Admin Starter (8082) → CI4 API Starter (8080) → Database
+                                                  ↑ JWT introspect
+                                                  └─ CI4 Domain Starter (8090) → its own DB
+
+SPA / mobile  → CI4 BFF Starter (8088) ──▶ CI4 API Starter (8080)  [forwards Authorization]
+                                       └─▶ CI4 Domain Starter (8090) [forwards Authorization]
 ```
 
 ## What lives in this repo
@@ -70,14 +79,16 @@ Use `new-project.sh` at the repo root to scaffold two independent repos for a ne
 bash new-project.sh
 ```
 
-The script asks for a project name, output directory, and whether to include a domain starter, then:
+The script asks for a project name, output directory, and whether to include a domain starter and/or a BFF starter, then:
 1. Clones `ci4-api-starter` → `{name}-api/` from GitHub (shallow clone, no git history)
 2. Clones `ci4-admin-starter` → `{name}-admin/` from GitHub (shallow clone, no git history)
 3. Optionally clones `ci4-domain-starter` → `{name}-domain/` from GitHub
-4. Initializes a fresh git repo in each with an initial commit
-5. Delegates to `{name}-api/init.sh` — installs deps, configures `.env`, creates DB, runs migrations, creates superadmin
-6. **If domain included:** registers the application in the hub via `php spark apps:bootstrap <code> --create-api-key`, starts the hub in background, logs in with the freshly-created superadmin to capture a JWT, exports `CI4_DOMAIN_*` env vars, runs `{name}-domain/init.sh --skip-server`, then stops the hub
-7. Delegates to `{name}-admin/install.sh` — replaces template references, configures `.env`, installs Composer deps
+4. Optionally clones `ci4-bff-starter` → `{name}-bff/` from GitHub
+5. Initializes a fresh git repo in each with an initial commit
+6. Delegates to `{name}-api/init.sh` — installs deps, configures `.env`, creates DB, runs migrations, creates superadmin
+7. **If domain included:** registers the application in the hub via `php spark apps:bootstrap <code> --create-api-key`, starts the hub in background, logs in with the freshly-created superadmin to capture a JWT, exports `CI4_DOMAIN_*` env vars, runs `{name}-domain/init.sh --skip-server`, then stops the hub
+8. **If BFF included:** exports `BFF_HUB_URL=http://localhost:8080`, `BFF_DOMAIN_URL=http://localhost:{DOMAIN_PORT}` (if domain), `BFF_ALLOWED_ORIGINS` and `BFF_PORT`, then runs `{name}-bff/init.sh --skip-server` (no hub bootstrap — BFF is stateless and forward-only)
+9. Delegates to `{name}-admin/install.sh` — replaces template references, configures `.env`, installs Composer deps
 
 After the script finishes, orient yourself in the generated project by reading:
 - `{name}-api/CLAUDE.md` — API architecture and patterns
@@ -167,6 +178,7 @@ apiClient.apiPrefix = '/api/v1'
 |---------|------|-----|
 | API Server (hub) | 8080 | http://localhost:8080 |
 | Admin Server | 8082 | http://localhost:8082 |
+| BFF Server *(optional)* | 8088 | http://localhost:8088 |
 | Domain Server *(optional)* | 8090 | http://localhost:8090 |
 | Database | 3306 | localhost (MySQL) |
 | Tailwind Watcher | — | Runs in Terminal 3 |

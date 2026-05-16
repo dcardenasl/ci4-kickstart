@@ -15,6 +15,7 @@ It's well-documented and free to use. That said: there's no support contract, no
 | [`ci4-api-starter`](https://github.com/dcardenasl/ci4-api-starter) | REST API backend — JWT auth, RBAC, CRUD scaffolding, OpenAPI docs | 8080 |
 | [`ci4-admin-starter`](https://github.com/dcardenasl/ci4-admin-starter) | Admin frontend — Tailwind CSS, Alpine.js, all modules wired | 8082 |
 | [`ci4-domain-starter`](https://github.com/dcardenasl/ci4-domain-starter) *(opt-in)* | Domain app template — owns business logic, delegates auth to the API hub | 8090 |
+| [`ci4-bff-starter`](https://github.com/dcardenasl/ci4-bff-starter) *(opt-in)* | Backend-for-Frontend — stateless gateway over hub + domain for SPA / mobile clients | 8088 |
 
 The generated API project is powered by two Packagist packages:
 
@@ -74,41 +75,49 @@ bash new-project.sh
 ```
 
 The script will:
-1. Ask for a project name, output directory, and whether to include a domain starter
+1. Ask for a project name, output directory, and whether to include a domain starter and/or a BFF starter
 2. Clone the sub-projects from GitHub (no git history, no vendor files)
 3. Initialize fresh git repos for each
 4. Walk you through API setup: database config, migrations, superadmin
 5. **If domain included:** register the application in the hub via `apps:bootstrap --create-api-key`, capture the X-App-Key, start the hub in background, capture a superadmin JWT via login, run domain `init.sh --skip-server` non-interactively, stop the hub
-6. Walk you through Admin setup: API URL, ports, app name
-7. Print the commands to start all processes
+6. **If BFF included:** run BFF `init.sh --skip-server` with `BFF_HUB_URL`, `BFF_DOMAIN_URL` and `BFF_ALLOWED_ORIGINS` pre-populated (no DB, no hub bootstrap — the BFF is stateless and forward-only)
+7. Walk you through Admin setup: API URL, ports, app name
+8. Print the commands to start all processes
 
-Total time: ~5 minutes (mostly waiting on `composer install`); add ~30s if you opt in to the domain starter.
+Total time: ~5 minutes (mostly waiting on `composer install`); add ~30s per opt-in starter.
 
 ### What `new-project.sh` does, step by step
 
 ```mermaid
 flowchart TD
     Start([bash new-project.sh])
-    Prompts["Prompt: name, output dir,<br/>include domain? + app code + port"]
+    Prompts["Prompt: name, output dir,<br/>include domain? + include BFF? +<br/>app code + ports"]
     CloneAPI["git clone ci4-api-starter → {name}-api"]
     CloneAdmin["git clone ci4-admin-starter → {name}-admin"]
     CloneDomain["git clone ci4-domain-starter → {name}-domain"]
+    CloneBFF["git clone ci4-bff-starter → {name}-bff"]
     APIInit["{name}-api: bash init.sh<br/>(deps, .env, DB, migrations, superadmin)"]
     Bootstrap["{name}-api: spark apps:bootstrap<br/>--create-api-key → captures API_KEY"]
     StartHub["spark serve :8080 (background)"]
     Login["POST /auth/login → captures JWT"]
     DomainInit["{name}-domain: bash init.sh --skip-server<br/>(env-driven, no prompts)"]
     StopHub["kill background hub"]
+    BFFInit["{name}-bff: bash init.sh --skip-server<br/>(env-driven, no DB)"]
     AdminInstall["{name}-admin: bash install.sh<br/>(.env, composer, template refs)"]
     Done([Print run-the-servers help])
 
     Start --> Prompts
     Prompts --> CloneAPI --> CloneAdmin
-    CloneAdmin -->|"include domain = y"| CloneDomain --> APIInit
-    CloneAdmin -->|"include domain = n"| APIInit
+    CloneAdmin -->|"include domain = y"| CloneDomain
+    CloneAdmin -->|"include BFF = y"| CloneBFF
     CloneDomain --> APIInit
-    APIInit -->|"include domain = y"| Bootstrap --> StartHub --> Login --> DomainInit --> StopHub --> AdminInstall
-    APIInit -->|"include domain = n"| AdminInstall
+    CloneBFF --> APIInit
+    CloneAdmin -->|"both = n"| APIInit
+    APIInit -->|"include domain = y"| Bootstrap --> StartHub --> Login --> DomainInit --> StopHub
+    StopHub --> BFFInit
+    APIInit -->|"include BFF only"| BFFInit
+    BFFInit --> AdminInstall
+    APIInit -->|"both = n"| AdminInstall
     AdminInstall --> Done
 ```
 
@@ -145,6 +154,9 @@ cd my-app-admin && npm run dev:css
 
 # Terminal 4 (optional) — Domain server
 cd my-app-domain && php spark serve --port 8090
+
+# Terminal 5 (optional) — BFF server
+cd my-app-bff && php spark serve --port 8088
 ```
 
 Then open [http://localhost:8082](http://localhost:8082) and log in with your superadmin credentials.
