@@ -96,6 +96,44 @@ After the script finishes, orient yourself in the generated project by reading:
 
 **Do not modify the template repos directly** to customize a new project — always work in the generated copies.
 
+## Building a domain template
+
+A **domain template** is a `ci4-domain-starter`-based repo with pre-built entities, permissions, and admin modules. `new-project.sh` can clone it instead of the vanilla starter, skipping the manual `make:crud` step for well-known domains (subscriptions, CMS, ecommerce, etc.).
+
+The full contract lives in `docs/TEMPLATE_CONTRACT.md`. This section is the operator-facing guide: how to build one, how to publish it to the catalog, and how to verify it.
+
+### Anatomy
+
+A template repo is a fork of `ci4-domain-starter` with:
+
+- Entities scaffolded via `make:crud` and committed (migrations, models, DTOs, services, controllers, routes)
+- Permissions declared in `app/Config/DomainPermissions.php` (the `domain:sync-permissions` command registers them in the hub during `init.sh`)
+- A `template.json` at the repo root declaring metadata, entities, permissions, and admin modules
+- A working `init.sh` at the repo root that respects `--skip-server` and the standard `CI4_DOMAIN_*` env vars (`CI4_DOMAIN_HUB_URL`, `CI4_DOMAIN_APP_CODE`, `CI4_DOMAIN_API_KEY`, `CI4_DOMAIN_DB_*`)
+
+### Publishing a template to the catalog
+
+1. Build the template repo and verify it passes `composer quality` + `php spark migrate` + entity CRUD via Postman against a fresh hub
+2. Tag a release in the template repo (`v1.0.0`)
+3. Open a PR against `ci4-kickstart/templates.json` adding the entry:
+   ```json
+   { "slug": "...", "repo": "owner/repo", "name": "...", "description": "...", "keywords": [...] }
+   ```
+4. Keep `keywords[]` in the catalog in sync with the upstream `template.json`. If the template changes its keywords, open a follow-up PR against the catalog.
+
+### Compatibility checklist
+
+Before opening the catalog PR, confirm:
+
+- [ ] `template.json` validates against `docs/TEMPLATE_CONTRACT.md` (all required fields present and non-empty)
+- [ ] `slug` matches the repo suffix exactly (e.g. `domain-multi-subscriptions` → repo `dcardenasl/domain-multi-subscriptions`)
+- [ ] `init.sh` accepts `--skip-server` and respects the standard `CI4_DOMAIN_*` env vars
+- [ ] Every `admin_modules[].entity` name appears in `entities[]`
+- [ ] Permission codes use the dot separator (`.`), never colons (CI4's filter parser splits on `:`)
+- [ ] `admin_modules[].service` is `"hub"` or `"domain"` only
+- [ ] If `requires_bff: true`, `public_endpoints[]` lists every route the BFF should expose without auth
+- [ ] Repo passes `composer quality` and `php spark migrate` against a fresh hub-registered application
+
 ## Essential Commands
 
 ```bash

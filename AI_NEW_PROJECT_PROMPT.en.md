@@ -40,29 +40,40 @@ bash new-project.sh
 The script will ask:
 1. **Project name** → Use the user's value
 2. **Output directory** → Use the user's value
-3. **Include domain starter?** → Default `N`. Answer `y` only if the user explicitly asks for it or needs a domain app that delegates auth to the hub.
-4. *(if you answered y)* **Application code** → Default `{project-name}-domain`. Accept or change.
-5. *(if you answered y)* **Domain port** → Default `8090`. Accept.
-6. **Include BFF starter?** → Default `N`. Answer `y` if the user needs a stateless gateway for an SPA / mobile client (CORS multi-origin, forward-only auth).
-7. *(if you answered y)* **BFF port** → Default `8088`. Accept.
+3. **Add a domain app?** → The script asks this in a loop until you answer `N`. Each `y` registers one domain app:
+   - **Domain name** → Default `{project-name}-domain` (or `-domain-2`, `-domain-3` ...). Accept or change.
+   - **Template** → A menu lists `0) vanilla` plus every entry in `ci4-kickstart/templates.json`. Pick:
+     - `0` (vanilla) when the user wants a blank `ci4-domain-starter` to scaffold with `make:crud` later
+     - A template number when the user's brief matches a pre-built domain (e.g. `domain-multi-subscriptions` for SaaS billing). Match against `keywords[]` and `name`/`description` of each catalog entry; if score is low, prefer vanilla and ask before assuming.
+   - **Port** → Default `8090 + (domain index − 1)`. Accept unless the user has port collisions.
+4. **Include BFF starter?** → Default `N`. Answer `y` if the user needs a stateless gateway for an SPA / mobile client (CORS multi-origin, forward-only auth). Auto-enabled if any selected template declares `requires_bff: true` — in that case skip the prompt.
+5. *(if BFF active)* **BFF port** → Default `8088`. Accept.
 
 For questions asked by `init.sh` (in the API):
 - Database host, user, password, name
 - JWT_SECRET_KEY (generate automatically if not provided)
 - Superadmin credentials
 
-If you opted in to the domain starter, **the script orchestrates automatically** (no further prompts):
-- Registers the application in the hub via `apps:bootstrap --create-api-key` and captures the X-App-Key
-- Starts the hub in background
-- Logs in with the just-created superadmin and captures the JWT
-- Runs `domain init.sh --skip-server` with all coordinates pre-supplied
+If you registered one or more domains, **the script orchestrates everything automatically** (no further prompts):
+- Registers every application in the hub via `apps:bootstrap --create-api-key` and captures each X-App-Key
+- Starts the hub once in background
+- Logs in with the just-created superadmin and captures a shared JWT
+- For each domain, if the cloned repo carries `template.json`:
+  - Validates the contract (`docs/TEMPLATE_CONTRACT.md`)
+  - Generates the declared `admin_modules[]` via `ci4-admin-starter/bin/make-module.sh`
+  - Warns if the template declares `public_endpoints[]` (BFF wiring is manual today)
+- Runs each `domain init.sh --skip-server` with all coordinates pre-supplied
 - Stops the hub
+
+For non-interactive runs, pass `CI4_DOMAINS="name1:template_slug1:port1,name2:template_slug2:port2"` (use `vanilla` as the slug for blank domains). Legacy `CI4_INCLUDE_DOMAIN=y` + `CI4_DOMAIN_APP_CODE` + `CI4_DOMAIN_PORT` remain supported for a single vanilla domain.
 
 If you opted in to the BFF starter, **the script orchestrates automatically** (no further prompts):
 - Exports `BFF_HUB_URL=http://localhost:8080` (the API just created)
-- Exports `BFF_DOMAIN_URL=http://localhost:{DOMAIN_PORT}` (if the domain was included; empty otherwise)
+- Exports `BFF_DOMAIN_URL=http://localhost:{FIRST_DOMAIN_PORT}` when at least one domain was registered (defaults to the first one); empty otherwise
 - Exports `BFF_ALLOWED_ORIGINS` (default `http://localhost:5173,http://localhost:3000`; override with `CI4_BFF_ALLOWED_ORIGINS`)
 - Runs `bff init.sh --skip-server` (no DB, no hub bootstrap — the BFF is stateless and forwards the client's `Authorization` header to upstream)
+
+> When more than one domain is registered, only the first one is wired to `BFF_DOMAIN_URL`. Extending the BFF to talk to additional domains requires manual edits in `{name}-bff/app/Libraries/`.
 
 For questions asked by `install.sh` (in the Admin):
 - API repository name
@@ -86,11 +97,11 @@ php spark serve --port {ADMIN_PORT}
 cd {ADMIN_DIR}
 npm run dev:css
 
-# Terminal 4 (if domain starter was included):
-cd {DOMAIN_DIR}
-php spark serve --port {DOMAIN_PORT}
+# Terminal 4..N (one per registered domain):
+cd {DOMAIN_DIR_i}
+php spark serve --port {DOMAIN_PORT_i}
 
-# Terminal 5 (if BFF starter was included):
+# Terminal N+1 (if BFF starter was included):
 cd {BFF_DIR}
 php spark serve --port {BFF_PORT}
 ```
