@@ -41,6 +41,9 @@ while [ $# -gt 0 ]; do
       printf "  CI4_INCLUDE_DOMAIN     y|n — include ci4-domain-starter as third repo\n"
       printf "  CI4_DOMAIN_APP_CODE    Application code in the hub (default <name>-domain)\n"
       printf "  CI4_DOMAIN_PORT        Port for domain dev server (default 8090)\n"
+      printf "  CI4_INCLUDE_BFF        y|n — include ci4-bff-starter as third/fourth repo\n"
+      printf "  CI4_BFF_PORT           Port for bff dev server (default 8088)\n"
+      printf "  CI4_BFF_ALLOWED_ORIGINS  CSV of CORS origins for the BFF (default: localhost:5173,localhost:3000)\n"
       exit 0
       ;;
     *)
@@ -73,6 +76,7 @@ die()          { print_err "$*"; exit 1; }
 API_TEMPLATE_REPO="https://github.com/dcardenasl/ci4-api-starter.git"
 ADMIN_TEMPLATE_REPO="https://github.com/dcardenasl/ci4-admin-starter.git"
 DOMAIN_TEMPLATE_REPO="https://github.com/dcardenasl/ci4-domain-starter.git"
+BFF_TEMPLATE_REPO="https://github.com/dcardenasl/ci4-bff-starter.git"
 
 # -----------------------------------------------------------------------------
 # Cleanup: removes only directories THIS SCRIPT created on unexpected failure.
@@ -81,9 +85,11 @@ DOMAIN_TEMPLATE_REPO="https://github.com/dcardenasl/ci4-domain-starter.git"
 API_DIR=""
 ADMIN_DIR=""
 DOMAIN_DIR=""
+BFF_DIR=""
 API_CREATED=false
 ADMIN_CREATED=false
 DOMAIN_CREATED=false
+BFF_CREATED=false
 HUB_PID=""
 
 cleanup_on_error() {
@@ -111,6 +117,11 @@ cleanup_on_error() {
         if [ "$DOMAIN_CREATED" = "true" ] && [ -n "$DOMAIN_DIR" ] && [ -e "$DOMAIN_DIR" ]; then
             rm -rf "$DOMAIN_DIR"
             print_warn "Eliminado: ${DOMAIN_DIR}"
+            cleaned=true
+        fi
+        if [ "$BFF_CREATED" = "true" ] && [ -n "$BFF_DIR" ] && [ -e "$BFF_DIR" ]; then
+            rm -rf "$BFF_DIR"
+            print_warn "Eliminado: ${BFF_DIR}"
             cleaned=true
         fi
         if [ "$cleaned" = "false" ]; then
@@ -175,8 +186,8 @@ echo -e "${BOLD}${CYAN}║              CI4 Kickstart — Nuevo Proyecto        
 echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo "  Crea proyectos independientes (API + Admin, opcionalmente"
-echo "  un Domain) a partir del kit, configura entornos, base de"
-echo "  datos y superadmin."
+echo "  un Domain y un BFF) a partir del kit, configura entornos,"
+echo "  base de datos y superadmin."
 echo ""
 echo "  Presiona Ctrl+C en cualquier momento para cancelar."
 echo ""
@@ -252,15 +263,43 @@ if [ "$INCLUDE_DOMAIN" = true ]; then
   fi
 fi
 
+# Optional: scaffold a ci4-bff-starter alongside API + Admin (+ Domain). The
+# BFF is a stateless gateway over the hub (and optionally the domain) for
+# decoupled clients (SPA, mobile). See BFF-006.
+if [ -n "${CI4_INCLUDE_BFF:-}" ]; then
+  INCLUDE_BFF_RAW="$(trim "$CI4_INCLUDE_BFF")"
+else
+  read -r -p "$(echo -e "  ${BOLD}Incluir BFF starter?${RESET} (y/N): ")" INCLUDE_BFF_RAW
+fi
+_include_bff_lower="$(printf '%s' "${INCLUDE_BFF_RAW:-n}" | tr '[:upper:]' '[:lower:]')"
+INCLUDE_BFF=false
+if [ "$_include_bff_lower" = "y" ] || [ "$_include_bff_lower" = "yes" ]; then
+  INCLUDE_BFF=true
+fi
+
+BFF_PORT=""
+BFF_ALLOWED_ORIGINS=""
+if [ "$INCLUDE_BFF" = true ]; then
+  if [ -n "${CI4_BFF_PORT:-}" ]; then
+    BFF_PORT="$(trim "$CI4_BFF_PORT")"
+  else
+    read -r -p "$(echo -e "  ${BOLD}BFF port${RESET} [8088]: ")" INPUT_BFF_PORT
+    BFF_PORT="$(trim "${INPUT_BFF_PORT:-8088}")"
+  fi
+  BFF_ALLOWED_ORIGINS="$(trim "${CI4_BFF_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}")"
+fi
+
 API_DIR="${OUTPUT_DIR}${PROJECT_NAME}-api"
 ADMIN_DIR="${OUTPUT_DIR}${PROJECT_NAME}-admin"
 [ "$INCLUDE_DOMAIN" = true ] && DOMAIN_DIR="${OUTPUT_DIR}${PROJECT_NAME}-domain"
+[ "$INCLUDE_BFF" = true ] && BFF_DIR="${OUTPUT_DIR}${PROJECT_NAME}-bff"
 
 echo ""
 echo -e "  ${BOLD}Se crearán:${RESET}"
 echo -e "    API:    ${CYAN}${API_DIR}${RESET}"
 echo -e "    Admin:  ${CYAN}${ADMIN_DIR}${RESET}"
 [ "$INCLUDE_DOMAIN" = true ] && echo -e "    Domain: ${CYAN}${DOMAIN_DIR}${RESET} (app=${DOMAIN_APP_CODE}, port=${DOMAIN_PORT})"
+[ "$INCLUDE_BFF" = true ]    && echo -e "    BFF:    ${CYAN}${BFF_DIR}${RESET} (port=${BFF_PORT})"
 echo ""
 
 # Verificar que los directorios destino no existan
@@ -268,6 +307,9 @@ echo ""
 [[ ! -e "$ADMIN_DIR" ]] || die "El directorio '${ADMIN_DIR}' ya existe. Elige otro nombre o elimínalo."
 if [ "$INCLUDE_DOMAIN" = true ]; then
   [[ ! -e "$DOMAIN_DIR" ]] || die "El directorio '${DOMAIN_DIR}' ya existe. Elige otro nombre o elimínalo."
+fi
+if [ "$INCLUDE_BFF" = true ]; then
+  [[ ! -e "$BFF_DIR" ]] || die "El directorio '${BFF_DIR}' ya existe. Elige otro nombre o elimínalo."
 fi
 
 if [ "$AUTO_YES" = true ] || [ -n "${CI4_CONFIRM:-}" ]; then
@@ -306,6 +348,11 @@ if [ "$INCLUDE_DOMAIN" = true ]; then
   DOMAIN_DIR="$(cd "$DOMAIN_DIR" && pwd)"
   DOMAIN_CREATED=true
 fi
+if [ "$INCLUDE_BFF" = true ]; then
+  clone_project "$BFF_TEMPLATE_REPO" "$BFF_DIR" "BFF"
+  BFF_DIR="$(cd "$BFF_DIR" && pwd)"
+  BFF_CREATED=true
+fi
 
 # =============================================================================
 # Inicialización de git
@@ -338,6 +385,7 @@ init_git() {
 init_git "$API_DIR"   "${PROJECT_NAME}-api"
 init_git "$ADMIN_DIR" "${PROJECT_NAME}-admin"
 [ "$INCLUDE_DOMAIN" = true ] && init_git "$DOMAIN_DIR" "${PROJECT_NAME}-domain"
+[ "$INCLUDE_BFF" = true ]    && init_git "$BFF_DIR"    "${PROJECT_NAME}-bff"
 
 # =============================================================================
 # Derive admin install defaults from PROJECT_NAME when not explicitly set.
@@ -499,6 +547,32 @@ if [ "$INCLUDE_DOMAIN" = true ]; then
 fi
 
 # =============================================================================
+# Setup del BFF (BFF-006)
+# =============================================================================
+# El BFF es un gateway stateless: no necesita registrar app en el hub, ni
+# bootstrap, ni DB. Solo lo configuramos con HUB_URL (de la API recién
+# creada), DOMAIN_URL (si el domain fue incluido) y BFF_ALLOWED_ORIGINS
+# (CSV), y delegamos al init.sh del BFF.
+if [ "$INCLUDE_BFF" = true ]; then
+    print_header "Configurando BFF (${PROJECT_NAME}-bff)"
+
+    export BFF_HUB_URL="http://localhost:8080"
+    if [ "$INCLUDE_DOMAIN" = true ]; then
+        export BFF_DOMAIN_URL="http://localhost:${DOMAIN_PORT}"
+    else
+        export BFF_DOMAIN_URL=""
+    fi
+    export BFF_ALLOWED_ORIGINS="$BFF_ALLOWED_ORIGINS"
+    export BFF_PORT
+    export BFF_APP_CODE="${PROJECT_NAME}-bff"
+
+    cd "$BFF_DIR"
+    # init.sh reads BFF_* env vars; --skip-server suppresses the final prompt.
+    bash init.sh --skip-server
+    cd "$SCRIPT_DIR"
+fi
+
+# =============================================================================
 # Setup del Admin
 # =============================================================================
 print_header "Configurando Admin (${PROJECT_NAME}-admin)"
@@ -550,7 +624,14 @@ echo -e "  ${YELLOW}Terminal 4 — Domain:${RESET}"
 echo -e "    cd ${DOMAIN_DIR}"
 echo -e "    php spark serve --port ${DOMAIN_PORT}"
 fi
+if [ "$INCLUDE_BFF" = true ]; then
+echo ""
+echo -e "  ${YELLOW}Terminal 5 — BFF:${RESET}"
+echo -e "    cd ${BFF_DIR}"
+echo -e "    php spark serve --port ${BFF_PORT}"
+fi
 echo ""
 echo -e "  ${BOLD}Accede al admin en:${RESET}  ${CYAN}http://localhost:8082${RESET}"
 [ "$INCLUDE_DOMAIN" = true ] && echo -e "  ${BOLD}Domain API en:${RESET}        ${CYAN}http://localhost:${DOMAIN_PORT}${RESET}  (app=${DOMAIN_APP_CODE})"
+[ "$INCLUDE_BFF" = true ]    && echo -e "  ${BOLD}BFF en:${RESET}               ${CYAN}http://localhost:${BFF_PORT}${RESET}  (CORS: ${BFF_ALLOWED_ORIGINS})"
 echo ""
