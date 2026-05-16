@@ -1,0 +1,5 @@
+{
+  "$schema_doc": "See docs/TEMPLATE_CONTRACT.md for the full templates.json contract.",
+  "$comment": "Empty catalog. Add template entries here when their repos are published. Each entry: {slug, repo, name, description, keywords[]}. Keywords are mirrored from the template's own template.json — keep them in sync when the upstream template changes.",
+  "templates": []
+}
