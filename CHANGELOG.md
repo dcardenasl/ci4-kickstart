@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] — 2026-05-16
 
 ### Added
+- **TMPL-001..005 · Template system for N domain apps** (2026-05-16) — `new-project.sh` now scaffolds 0..N domain apps in a single run, with optional pre-built templates selected from `templates.json`. New surface:
+  - `templates.json` at the repo root — catalog of published domain templates (`{slug, repo, name, description, keywords[]}` per entry). Ships empty; entries are added via PR when a template repo is published.
+  - `docs/TEMPLATE_CONTRACT.md` — contract for `template.json` (per-repo) and `templates.json` (catalog). Documents required/optional fields, the integration flow with `new-project.sh`, the matching contract for the `ci4-new-project` skill, and the pre-publish validation checklist.
+  - `new-project.sh` prompt loop — `¿Agregar un domain app?` repeats until the user answers `N`. Each iteration asks for a name, a template (menu shows `0) vanilla` plus every catalog entry) and a port. Backwards compatible: `CI4_INCLUDE_DOMAIN=y` + `CI4_DOMAIN_APP_CODE` + `CI4_DOMAIN_PORT` still create a single vanilla domain.
+  - `CI4_DOMAINS` env var — CSV of `name:template_slug:port` tuples for non-interactive runs (e.g. `CI4_DOMAINS="shop:vanilla:8090,blog:vanilla:8091"`).
+  - `apply_template()` — after each domain clone, if the repo carries `template.json`, validates the contract (required fields, dot-separated permissions, `admin_modules[].service ∈ {hub, domain}`) and generates the declared `admin_modules[]` against `ci4-admin-starter/bin/make-module.sh`. Permissions are registered by the domain's own `domain:sync-permissions` during `init.sh`.
+  - Auto-enable of the BFF — when any selected template declares `requires_bff: true`, `INCLUDE_BFF` is forced regardless of the prompt answer.
+  - Summary section — lists every registered domain with its template, port and app code; numbers Terminal entries dynamically. Warns when more than one domain is registered that the BFF only wires the first one.
+  - CLAUDE.md — new "Building a domain template" section covering anatomy, the publishing flow against `templates.json`, and the compatibility checklist before a catalog PR.
+  - AI prompts (`AI_NEW_PROJECT_PROMPT.en.md` and `.es.md`) — updated with the new prompt loop, the template-matching guidance against `keywords[]`, and the multi-domain BFF wiring note.
 - **BFF-006 · optional BFF starter** (2026-05-16) — `new-project.sh` offers to clone and configure `ci4-bff-starter` as a third/fourth repo (`{name}-bff/`) alongside the API hub, the admin and the optional domain. When the new prompt is answered `y`:
   - clones from `github.com/dcardenasl/ci4-bff-starter` (same pattern as the other starters),
   - exports `BFF_HUB_URL=http://localhost:8080` (the just-bootstrapped API), `BFF_DOMAIN_URL=http://localhost:{DOMAIN_PORT}` (if the domain was included; empty otherwise), `BFF_ALLOWED_ORIGINS` (default `http://localhost:5173,http://localhost:3000`; override with `CI4_BFF_ALLOWED_ORIGINS`) and `BFF_PORT` (default `8088`),
@@ -33,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **README — Windows setup section** (WSL 2 / Git Bash) with the note about avoiding `/mnt/c` paths for performance.
 
 ### Changed
+- **`new-project.sh` cleanup** (TMPL-003) — the failure trap now walks the `DOMAIN_DIRS` array instead of a single `DOMAIN_DIR`. Guarded against bash 3.2 `set -u` empty-array expansion.
+- **`new-project.sh` hub bootstrap** (TMPL-003) — `apps:bootstrap --create-api-key` now runs once per registered domain (instead of zero or one) and the hub is brought up only once for the whole batch.
 - **IAM schema reference in `CLAUDE.md` updated** to the consolidated `user_roles` shape (was: `app_user_memberships` + `membership_roles`). Generated projects now describe the correct schema out of the box, matching the migrations shipped by `ci4-api-starter` v2.0.0.
 
 ### Fixed
